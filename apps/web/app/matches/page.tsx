@@ -1,0 +1,5 @@
+import { MatchTable } from "@/components/match-table";
+import { Shell } from "@/components/shell";
+import { getMatches } from "@/lib/api";
+
+export default async function MatchesPage() { const matches = await getMatches(); return <Shell><p className="eyebrow">Match explorer</p><h1 className="mt-2 text-3xl font-semibold text-white">Partidos</h1><div className="panel mt-6 grid gap-3 p-4 sm:grid-cols-3"><input aria-label="Buscar equipo" placeholder="Equipo" className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm" /><select aria-label="Competición" className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"><option>Todas las competiciones</option></select><select aria-label="Estado" className="rounded border border-slate-700 bg-slate-950 px-3 py-2 text-sm"><option>Todos los estados</option></select></div><p className="my-4 text-xs text-amber-300">Los filtros visuales quedan preparados; el conjunto actual es sintético.</p><MatchTable matches={matches} /></Shell>; }

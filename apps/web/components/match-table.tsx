@@ -1,0 +1,6 @@
+import Link from "next/link";
+import type { Match } from "@/lib/types";
+
+export function MatchTable({ matches }: { matches: Match[] }) {
+  return <div className="panel overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="border-b border-slate-800 bg-slate-950/50 text-xs uppercase tracking-wider text-slate-500"><tr><th className="px-5 py-3">Inicio</th><th className="px-5 py-3">Competición</th><th className="px-5 py-3">Partido</th><th className="px-5 py-3">Estado</th><th className="px-5 py-3">Fuente</th></tr></thead><tbody>{matches.map(match => <tr key={match.id} className="border-b border-slate-800/70 last:border-0 hover:bg-slate-800/30"><td className="px-5 py-4 text-slate-400">{new Intl.DateTimeFormat("es", { dateStyle: "short", timeStyle: "short" }).format(new Date(match.starts_at))}</td><td className="px-5 py-4 text-slate-400">{match.competition}</td><td className="px-5 py-4 font-medium text-slate-100"><Link href={`/matches/${match.id}`}>{match.home_team} <span className="text-slate-500">vs</span> {match.away_team}</Link></td><td className="px-5 py-4"><span className="rounded bg-slate-800 px-2 py-1 text-xs text-cyan-300">{match.score ?? match.status}</span></td><td className="px-5 py-4 text-xs text-amber-300">{match.source}</td></tr>)}</tbody></table></div></div>;
+}

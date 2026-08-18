@@ -1,0 +1,11 @@
+import Link from "next/link";
+import { MatchTable } from "@/components/match-table";
+import { Shell } from "@/components/shell";
+import { StatCard } from "@/components/stat-card";
+import { getMarkets, getMatches } from "@/lib/api";
+
+export default async function Dashboard() {
+  const [matches, markets] = await Promise.all([getMatches(), getMarkets()]);
+  const upcoming = matches.filter(match => match.status === "scheduled");
+  return <Shell><header className="mb-8 flex items-start justify-between"><div><p className="eyebrow">Private quantitative workspace</p><h1 className="mt-2 text-3xl font-semibold text-white">Dashboard</h1><p className="mt-2 text-sm text-slate-400">Señales, contexto y trazabilidad; no recomendaciones ni garantías.</p></div><span className="rounded border border-amber-500/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-300">MOCK DATA</span></header><section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><StatCard label="Próximos partidos" value={String(upcoming.length)} detail="en observación" /><StatCard label="Mercados" value={String(markets.length)} detail="snapshots disponibles" /><StatCard label="Oportunidades" value="2" detail="edge estimado &gt; 3 pp" /><StatCard label="Sistema" value="Operativo" detail="proveedor: MockDataProvider" /></section><section className="mt-8 grid gap-6 xl:grid-cols-[1.5fr_0.9fr]"><div><div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-medium text-white">Partidos</h2><Link className="text-sm text-cyan-400" href="/matches">Ver todos</Link></div><MatchTable matches={matches} /></div><div className="panel p-5"><p className="eyebrow">Actividad reciente</p><div className="mt-4 space-y-4 text-sm"><p><span className="text-cyan-400">09:42</span> · 3 snapshots mock normalizados</p><p><span className="text-cyan-400">09:18</span> · Estadísticas de ventana L5 calculadas</p><p><span className="text-cyan-400">08:55</span> · Motor parlay disponible</p></div><div className="mt-7 border-t border-slate-800 pt-5"><p className="eyebrow">Nota metodológica</p><p className="mt-2 text-sm leading-6 text-slate-400">Las probabilidades del MVP se entregan como estimaciones demostrativas. La dependencia entre selecciones no se modela todavía.</p></div></div></section></Shell>;
+}

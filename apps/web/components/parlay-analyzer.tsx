@@ -1,16 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { Sport } from "@/lib/types";
 
 type Selection = { name: string; decimal_odds: number; model_probability: number; historical_frequency: number };
 const defaultSelections: Selection[] = [
   { name: "Over 2.5 goles", decimal_odds: 1.82, model_probability: 0.62, historical_frequency: 0.66 },
   { name: "Over 8.5 corners", decimal_odds: 1.91, model_probability: 0.57, historical_frequency: 0.60 },
 ];
+const tennisSelections: Selection[] = [
+  { name: "Ganador: Lucía Soler", decimal_odds: 1.72, model_probability: 0.61, historical_frequency: 0.64 },
+  { name: "Más de 22.5 juegos", decimal_odds: 1.87, model_probability: 0.56, historical_frequency: 0.58 },
+];
 const pct = (value: number) => `${(value * 100).toFixed(1)}%`;
 
-export function ParlayAnalyzer() {
-  const [selections, setSelections] = useState(defaultSelections);
+export function ParlayAnalyzer({ sport = "football" }: { sport?: Sport }) {
+  const [selections, setSelections] = useState(sport === "tennis" ? tennisSelections : defaultSelections);
   const [error, setError] = useState("");
   const result = useMemo(() => {
     const odds = selections.reduce((total, selection) => total * selection.decimal_odds, 1);

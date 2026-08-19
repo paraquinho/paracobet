@@ -1,5 +1,7 @@
 import type { Match, MatchDetail, MarketQuote } from "./types";
 import { mockDetail, mockMarkets, mockMatches } from "./mock-data";
+import { tennisDetail, tennisMarkets, tennisMatches } from "./tennis-mock-data";
+import type { Sport } from "./types";
 
 /**
  * The MVP is self-contained when no public API URL is configured. This is
@@ -16,6 +18,6 @@ async function request<T>(path: string, fallback: T): Promise<T> {
     return fallback;
   }
 }
-export const getMatches = () => request<Match[]>("/api/v1/matches", mockMatches);
-export const getMatch = (id: string) => request<MatchDetail | null>(`/api/v1/matches/${id}`, id === mockDetail.id ? mockDetail : null);
-export const getMarkets = () => request<MarketQuote[]>("/api/v1/markets", mockMarkets);
+export const getMatches = (sport: Sport = "football") => sport === "tennis" ? Promise.resolve(tennisMatches) : request<Match[]>("/api/v1/matches", mockMatches);
+export const getMatch = (id: string, sport: Sport = "football") => sport === "tennis" ? Promise.resolve(id === tennisDetail.id ? tennisDetail : null) : request<MatchDetail | null>(`/api/v1/matches/${id}`, id === mockDetail.id ? mockDetail : null);
+export const getMarkets = (sport: Sport = "football") => sport === "tennis" ? Promise.resolve(tennisMarkets) : request<MarketQuote[]>("/api/v1/markets", mockMarkets);

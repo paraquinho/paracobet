@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) { return <main className="min-h-screen bg-[#07111f] p-10 text-slate-200"><p className="eyebrow">Error de ejecución</p><h1 className="mt-2 text-2xl font-semibold">No se pudo cargar esta vista</h1><button onClick={() => reset()} className="mt-5 rounded bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950">Intentar nuevamente</button></main>; }

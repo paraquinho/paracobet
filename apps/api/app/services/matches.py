@@ -17,7 +17,9 @@ class MatchService:
                 else self.provider.list_matches()
             )
         except Exception:
-            # Development remains usable when PostgreSQL is not running.
+            if self.repository:
+                raise
+            # Development remains usable when PostgreSQL is not configured.
             matches = self.provider.list_matches()
         if status:
             matches = [match for match in matches if match.status == status]

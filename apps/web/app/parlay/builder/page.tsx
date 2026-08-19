@@ -1,3 +1,8 @@
+import { BuilderPanel } from "@/components/builder-panel";
 import { Shell } from "@/components/shell";
+import { getMarkets } from "@/lib/api";
 
-export default function BuilderPage() { return <Shell><p className="eyebrow">Future candidate generation</p><h1 className="mt-2 text-3xl font-semibold text-white">Parlay Builder</h1><div className="panel mt-7 max-w-3xl p-6"><h2 className="text-lg font-medium text-white">Base arquitectónica preparada</h2><p className="mt-3 leading-7 text-slate-400">La siguiente fase generará candidatos usando cuota objetivo, probabilidad mínima, edge mínimo, mercados permitidos y límites de riesgo. Antes de activarla se incorporará un control de correlación entre selecciones y validación de datos disponibles al instante de predicción.</p><div className="mt-6 grid gap-3 sm:grid-cols-3">{["Cuota objetivo", "Probabilidad mínima", "Edge mínimo"].map(item => <div key={item} className="rounded border border-slate-700 bg-slate-950/60 p-3 text-sm text-slate-500">{item}<br /><span className="text-xs">pendiente de modelo</span></div>)}</div></div></Shell>; }
+export default async function BuilderPage() {
+  const markets = await getMarkets();
+  return <Shell><p className="eyebrow">Generación de candidatas mock</p><h1 className="mt-2 text-3xl font-semibold text-white">Constructor de combinadas</h1><p className="mt-2 text-sm text-slate-400">Construye y valida una combinación con las cuotas sintéticas disponibles.</p><div className="mt-7"><BuilderPanel markets={markets} /></div></Shell>;
+}

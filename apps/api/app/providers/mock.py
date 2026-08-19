@@ -12,8 +12,8 @@ class MockDataProvider(SportsDataProvider):
         self._matches = [
             MatchSummary(
                 id="mock-001",
-                competition="Iberian Analytics League",
-                country="Spain",
+                competition="Liga Ibérica de Analítica",
+                country="España",
                 home_team="Atlético Norte",
                 away_team="Costa Azul",
                 starts_at=now + timedelta(hours=3),
@@ -21,8 +21,8 @@ class MockDataProvider(SportsDataProvider):
             ),
             MatchSummary(
                 id="mock-002",
-                competition="Iberian Analytics League",
-                country="Spain",
+                competition="Liga Ibérica de Analítica",
+                country="España",
                 home_team="Real Montaña",
                 away_team="Deportivo Río",
                 starts_at=now + timedelta(hours=5),
@@ -30,8 +30,8 @@ class MockDataProvider(SportsDataProvider):
             ),
             MatchSummary(
                 id="mock-003",
-                competition="Premier Metrics",
-                country="England",
+                competition="Métricas Premier",
+                country="Inglaterra",
                 home_team="West Harbour",
                 away_team="Kingsbridge",
                 starts_at=now - timedelta(hours=2),
@@ -40,8 +40,8 @@ class MockDataProvider(SportsDataProvider):
             ),
             MatchSummary(
                 id="mock-004",
-                competition="Premier Metrics",
-                country="England",
+                competition="Métricas Premier",
+                country="Inglaterra",
                 home_team="Northbridge",
                 away_team="Elm City",
                 starts_at=now - timedelta(days=1),
@@ -53,8 +53,8 @@ class MockDataProvider(SportsDataProvider):
             MarketQuote(
                 id="q-001",
                 match_id="mock-001",
-                market="Total goals",
-                selection="Over 2.5",
+                market="Total de goles",
+                selection="Más de 2.5",
                 line=2.5,
                 odds=1.82,
                 bookmaker="MockBook",
@@ -64,8 +64,8 @@ class MockDataProvider(SportsDataProvider):
             MarketQuote(
                 id="q-002",
                 match_id="mock-001",
-                market="Total corners",
-                selection="Over 8.5",
+                market="Total de córners",
+                selection="Más de 8.5",
                 line=8.5,
                 odds=1.91,
                 bookmaker="MockBook",
@@ -75,8 +75,8 @@ class MockDataProvider(SportsDataProvider):
             MarketQuote(
                 id="q-003",
                 match_id="mock-001",
-                market="Both teams score",
-                selection="Yes",
+                market="Ambos equipos marcan",
+                selection="Sí",
                 odds=1.74,
                 bookmaker="MockBook",
                 observed_at=now,
@@ -85,8 +85,8 @@ class MockDataProvider(SportsDataProvider):
             MarketQuote(
                 id="q-004",
                 match_id="mock-002",
-                market="Total goals",
-                selection="Under 3.5",
+                market="Total de goles",
+                selection="Menos de 3.5",
                 line=3.5,
                 odds=1.48,
                 bookmaker="MockBook",
@@ -96,8 +96,8 @@ class MockDataProvider(SportsDataProvider):
             MarketQuote(
                 id="q-005",
                 match_id="mock-003",
-                market="Total corners",
-                selection="Over 9.5",
+                market="Total de córners",
+                selection="Más de 9.5",
                 line=9.5,
                 odds=2.04,
                 bookmaker="MockBook",
@@ -126,13 +126,22 @@ class MockDataProvider(SportsDataProvider):
                 "fouls": {"home": 11.2, "away": 12.7},
                 "possession": {"home": 53.0, "away": 47.0},
             },
-            recent_form={"home": [2.0, 1.0, 3.0, 1.0, 2.0], "away": [1.0, 2.0, 0.0, 2.0, 1.0]},
+            recent_form={
+                "home": [
+                    2.0, 1.0, 3.0, 1.0, 2.0, 0.0, 2.0, 1.0, 1.0, 3.0,
+                    2.0, 2.0, 0.0, 1.0, 2.0, 1.0, 3.0, 1.0, 2.0, 0.0,
+                ],
+                "away": [
+                    1.0, 2.0, 0.0, 2.0, 1.0, 1.0, 0.0, 2.0, 1.0, 1.0,
+                    2.0, 0.0, 1.0, 2.0, 1.0, 0.0, 2.0, 1.0, 2.0, 1.0,
+                ],
+            },
         )
 
     def list_competitions(self) -> list[CompetitionSummary]:
         return [
-            CompetitionSummary(id="comp-001", name="Iberian Analytics League", country="Spain"),
-            CompetitionSummary(id="comp-002", name="Premier Metrics", country="England"),
+            CompetitionSummary(id="comp-001", name="Liga Ibérica de Analítica", country="España"),
+            CompetitionSummary(id="comp-002", name="Métricas Premier", country="Inglaterra"),
         ]
 
     def list_markets(self, match_id: str | None = None) -> list[MarketQuote]:

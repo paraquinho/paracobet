@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: paracobet-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: ./apps/api
+    branch: main
+    healthCheckPath: /health/db
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: USE_DATABASE
+        value: "true"
+      - key: ENVIRONMENT
+        value: production
+      - key: CORS_ORIGINS
+        sync: false

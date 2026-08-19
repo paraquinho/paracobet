@@ -17,3 +17,5 @@ data/raw/*
 data/processed/*
 !data/processed/.gitkeep
 *.log
+*.tsbuildinfo
+*supabase*.txt

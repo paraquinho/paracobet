@@ -1,10 +1,10 @@
 from alembic import context
-from app.core.config import settings
+from app.core.config import sqlalchemy_database_url
 from app.infrastructure import models  # noqa: F401
 from app.infrastructure.database import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option("sqlalchemy.url", sqlalchemy_database_url())
 
 target_metadata = Base.metadata
 

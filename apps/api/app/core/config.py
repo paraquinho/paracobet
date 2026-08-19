@@ -16,5 +16,15 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
+def sqlalchemy_database_url() -> str:
+    """Make plain libpq/Supabase URLs explicit for the psycopg SQLAlchemy driver."""
+    url = settings.database_url
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg://" + url.removeprefix("postgresql://")
+    if ".supabase." in url and "sslmode=" not in url:
+        url += "&sslmode=require" if "?" in url else "?sslmode=require"
+    return url
+
+
 def cors_origin_list() -> list[str]:
     return [origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()]

@@ -25,7 +25,7 @@ export function DashboardWorkspace({ sport, matches, markets }: { sport: Sport; 
     } catch { setVisibleMatches(matches); } finally { setLoading(false); }
   };
   const setOffset = (nextOffset: number) => { void selectDay(nextOffset); };
-  const dayMatches = visibleMatches.filter((match) => dayKey(new Date(match.starts_at)) === dayKey(dateAtOffset(offset)));
+  const dayMatches = process.env.NEXT_PUBLIC_API_URL ? visibleMatches : visibleMatches.filter((match) => dayKey(new Date(match.starts_at)) === dayKey(dateAtOffset(offset)));
   const matchIds = new Set(dayMatches.map((match) => match.id));
   const opportunities = markets.filter((market) => matchIds.has(market.match_id)).map((market) => {
     const match = dayMatches.find((item) => item.id === market.match_id);

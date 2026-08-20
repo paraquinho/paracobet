@@ -4,6 +4,7 @@ export type Match = {
   starts_at: string; status: string; score?: string | null; source: string;
   home_team_id?: number | null; away_team_id?: number | null; home_logo?: string | null; away_logo?: string | null;
   season?: number | null;
+  competition_id?: number | null;
   surface?: string; round?: string; sets?: string;
 };
 export type MarketQuote = { id: string; match_id: string; market: string; selection: string; line?: number | null; odds: number; bookmaker: string; source: string };

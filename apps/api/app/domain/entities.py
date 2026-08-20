@@ -20,6 +20,7 @@ class MatchSummary(BaseModel):
     away_logo: str | None = None
     season: int | None = None
     round: str | None = None
+    competition_id: int | None = None
 
 
 class MatchDetail(MatchSummary):

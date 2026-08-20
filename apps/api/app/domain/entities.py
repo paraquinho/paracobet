@@ -21,6 +21,7 @@ class MatchSummary(BaseModel):
     season: int | None = None
     round: str | None = None
     competition_id: int | None = None
+    competition_logo: str | None = None
 
 
 class MatchDetail(MatchSummary):

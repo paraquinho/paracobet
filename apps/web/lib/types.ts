@@ -5,6 +5,7 @@ export type Match = {
   home_team_id?: number | null; away_team_id?: number | null; home_logo?: string | null; away_logo?: string | null;
   season?: number | null;
   competition_id?: number | null;
+  competition_logo?: string | null;
   surface?: string; round?: string; sets?: string;
 };
 export type MarketQuote = { id: string; match_id: string; market: string; selection: string; line?: number | null; odds: number; bookmaker: string; source: string };

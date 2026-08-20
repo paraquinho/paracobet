@@ -14,6 +14,12 @@ class MatchSummary(BaseModel):
     status: str
     score: str | None = None
     source: str = "mock"
+    home_team_id: int | None = None
+    away_team_id: int | None = None
+    home_logo: str | None = None
+    away_logo: str | None = None
+    season: int | None = None
+    round: str | None = None
 
 
 class MatchDetail(MatchSummary):

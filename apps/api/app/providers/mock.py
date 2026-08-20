@@ -106,7 +106,7 @@ class MockDataProvider(SportsDataProvider):
             ),
         ]
 
-    def list_matches(self) -> list[MatchSummary]:
+    def list_matches(self, date: str | None = None, timezone: str = "America/Bogota") -> list[MatchSummary]:
         return self._matches
 
     def get_match(self, match_id: str) -> MatchDetail | None:

@@ -8,7 +8,10 @@ class Settings(BaseSettings):
     use_database: bool = False
     environment: str = "development"
     cors_origins: str = "http://localhost:3000"
-    sports_provider_api_key: str | None = None
+    api_football_key: str | None = None
+    api_football_base_url: str = "https://v3.football.api-sports.io"
+    api_football_timeout_seconds: float = 8.0
+    api_football_cache_seconds: int = 60
     odds_provider_api_key: str | None = None
     model_config = SettingsConfigDict(env_file="../../.env", extra="ignore")
 

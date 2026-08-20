@@ -12,9 +12,11 @@ router = APIRouter(prefix="/matches", tags=["matches"])
 def list_matches(
     status: str | None = Query(default=None),
     competition: str | None = Query(default=None),
+    date: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    timezone: str = Query(default="America/Bogota"),
     service: MatchService = Depends(get_match_service),
 ) -> list[MatchSummary]:
-    return service.list_matches(status, competition)
+    return service.list_matches(status, competition, date, timezone)
 
 
 @router.get("/{match_id}/history")

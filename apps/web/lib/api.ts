@@ -18,6 +18,6 @@ async function request<T>(path: string, fallback: T): Promise<T> {
     return fallback;
   }
 }
-export const getMatches = (sport: Sport = "football") => sport === "tennis" ? Promise.resolve(tennisMatches) : request<Match[]>("/api/v1/matches", mockMatches);
+export const getMatches = (sport: Sport = "football", date?: string) => sport === "tennis" ? Promise.resolve(tennisMatches) : request<Match[]>(`/api/v1/matches?timezone=America%2FBogota${date ? `&date=${date}` : ""}`, mockMatches);
 export const getMatch = (id: string, sport: Sport = "football") => sport === "tennis" ? Promise.resolve(id === tennisDetail.id ? tennisDetail : null) : request<MatchDetail | null>(`/api/v1/matches/${id}`, id === mockDetail.id ? mockDetail : null);
 export const getMarkets = (sport: Sport = "football") => sport === "tennis" ? Promise.resolve(tennisMarkets) : request<MarketQuote[]>("/api/v1/markets", mockMarkets);

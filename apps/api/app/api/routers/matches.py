@@ -2,10 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.analytics.historical import historical_window
 from app.api.dependencies import get_match_service
-from app.domain.entities import MatchDetail, MatchSummary
+from app.domain.entities import MatchDetail, MatchSummary, TeamForm, TeamStatistics
 from app.services.matches import MatchService
 
 router = APIRouter(prefix="/matches", tags=["matches"])
+
+teams_router = APIRouter(prefix="/teams", tags=["teams"])
+
+
+@teams_router.get("/{team_id}/statistics", response_model=TeamStatistics)
+def team_statistics(team_id: int, competition_id: int = Query(..., alias="competition"), season: int = Query(...), service: MatchService = Depends(get_match_service)) -> TeamStatistics:
+    return service.team_statistics(team_id, competition_id, season)
+
+
+@teams_router.get("/{team_id}/form", response_model=TeamForm)
+def team_form(team_id: int, competition_id: int = Query(..., alias="competition"), season: int = Query(...), service: MatchService = Depends(get_match_service)) -> TeamForm:
+    return service.team_form(team_id, competition_id, season)
 
 
 @router.get("", response_model=list[MatchSummary])

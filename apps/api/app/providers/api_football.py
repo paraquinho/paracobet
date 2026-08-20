@@ -12,7 +12,9 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from app.core.config import settings
-from app.domain.entities import CompetitionSummary, MarketQuote, MatchDetail, MatchSummary
+from app.domain.entities import (CompetitionSummary, FormMatch, FormWindow, MarketQuote,
+                                  MatchDetail, MatchSummary, TeamForm, TeamPerformanceStats,
+                                  TeamStatistics)
 from app.providers.base import SportsDataProvider
 
 
@@ -24,6 +26,7 @@ class ApiFootballProvider(SportsDataProvider):
     def __init__(self) -> None:
         self._cache: dict[tuple[str, str], tuple[float, list[MatchSummary]]] = {}
         self._matches: dict[str, MatchSummary] = {}
+        self._team_cache: dict[tuple[str, int, int, int], tuple[float, object]] = {}
         self._lock = threading.Lock()
 
     def list_matches(self, date: str | None = None, timezone: str = "America/Bogota") -> list[MatchSummary]:
@@ -58,6 +61,36 @@ class ApiFootballProvider(SportsDataProvider):
     def list_competitions(self) -> list[CompetitionSummary]:
         return []
 
+    def get_team_statistics(self, team_id: int, competition_id: int, season: int) -> TeamStatistics:
+        key = ("statistics", team_id, competition_id, season)
+        cached = self._cached_team(key)
+        if cached:
+            return cached
+        payload = self._request("teams/statistics", {"team": str(team_id), "league": str(competition_id), "season": str(season)})
+        response = payload.get("response")
+        if not isinstance(response, dict):
+            raise ApiFootballError("Invalid team statistics response")
+        team = response.get("team") if isinstance(response.get("team"), dict) else {}
+        stats = TeamStatistics(team_id=team_id, team_name=str(team.get("name") or "Equipo"), logo=team.get("logo") if isinstance(team.get("logo"), str) else None, country=team.get("country") if isinstance(team.get("country"), str) else None, competition_id=competition_id, season=season, general=self._performance(response), home=self._performance(response, "home"), away=self._performance(response, "away"))
+        self._store_team(key, stats)
+        return stats
+
+    def get_team_form(self, team_id: int, competition_id: int, season: int) -> TeamForm:
+        key = ("form", team_id, competition_id, season)
+        cached = self._cached_team(key)
+        if cached:
+            return cached
+        payload = self._request("fixtures", {"team": str(team_id), "last": "20", "league": str(competition_id), "season": str(season)})
+        response = payload.get("response")
+        if not isinstance(response, list):
+            raise ApiFootballError("Invalid team form response")
+        matches = [self._normalize_form(item, team_id) for item in response if isinstance(item, dict)]
+        matches.sort(key=lambda item: item.date, reverse=True)
+        windows = {f"L{size}": self._form_window(size, matches[:size]) for size in (5, 10, 15, 20)}
+        form = TeamForm(team_id=team_id, team_name="Equipo", competition_id=competition_id, season=season, windows=windows)
+        self._store_team(key, form)
+        return form
+
     def list_markets(self, match_id: str | None = None) -> list[MarketQuote]:
         return []
 
@@ -78,6 +111,57 @@ class ApiFootballProvider(SportsDataProvider):
         if not isinstance(data, dict):
             raise ApiFootballError("Invalid provider payload")
         return data
+
+    def _cached_team(self, key: tuple[str, int, int, int]):
+        with self._lock:
+            cached = self._team_cache.get(key)
+        if cached and time.monotonic() - cached[0] < (settings.api_football_cache_seconds * (60 if key[0] == "statistics" else 5)):
+            return cached[1]
+        return None
+
+    def _store_team(self, key: tuple[str, int, int, int], value: object) -> None:
+        with self._lock:
+            self._team_cache[key] = (time.monotonic(), value)
+
+    @staticmethod
+    def _performance(data: object, side: str | None = None) -> TeamPerformanceStats:
+        data = data if isinstance(data, dict) else {}
+        fixtures = data.get("fixtures") if isinstance(data.get("fixtures"), dict) else {}
+        if side and isinstance(fixtures.get(side), dict):
+            fixtures = fixtures[side]
+        goals = data.get("goals") if isinstance(data.get("goals"), dict) else {}
+        for_goals = goals.get("for") if isinstance(goals.get("for"), dict) else {}
+        against_goals = goals.get("against") if isinstance(goals.get("against"), dict) else {}
+        def value(obj: object, key: str):
+            raw = obj.get(key) if isinstance(obj, dict) else None
+            if isinstance(raw, dict): raw = raw.get(side or "total")
+            return raw if isinstance(raw, (int, float)) else None
+        played = value(fixtures, "played")
+        def average(obj: object):
+            raw = obj.get("average") if isinstance(obj, dict) else None
+            if isinstance(raw, dict): raw = raw.get(side or "total")
+            return float(raw) if isinstance(raw, (int, float)) else None
+        return TeamPerformanceStats(played=played, wins=value(fixtures, "wins"), draws=value(fixtures, "draws"), losses=value(fixtures, "loses") or value(fixtures, "losses"), goals_for=value(for_goals, "total"), goals_against=value(against_goals, "total"), goals_for_avg=average(for_goals), goals_against_avg=average(against_goals), clean_sheets=value(data.get("clean_sheet"), "total"), failed_to_score=value(data.get("failed_to_score"), "total"), metrics={})
+
+    @staticmethod
+    def _normalize_form(item: dict[str, object], team_id: int) -> FormMatch:
+        fixture = item.get("fixture") if isinstance(item.get("fixture"), dict) else {}
+        teams = item.get("teams") if isinstance(item.get("teams"), dict) else {}
+        home = teams.get("home") if isinstance(teams.get("home"), dict) else {}
+        away = teams.get("away") if isinstance(teams.get("away"), dict) else {}
+        goals = item.get("goals") if isinstance(item.get("goals"), dict) else {}
+        is_home = home.get("id") == team_id
+        own, opp = (home, away) if is_home else (away, home)
+        own_goals, opp_goals = goals.get("home" if is_home else "away"), goals.get("away" if is_home else "home")
+        result = "W" if isinstance(own_goals, int) and isinstance(opp_goals, int) and own_goals > opp_goals else "L" if isinstance(own_goals, int) and isinstance(opp_goals, int) and own_goals < opp_goals else "D"
+        league = item.get("league") if isinstance(item.get("league"), dict) else {}
+        return FormMatch(fixture_id=int(fixture.get("id") or 0), date=datetime.fromisoformat(str(fixture.get("date")).replace("Z", "+00:00")), competition_id=league.get("id") if isinstance(league.get("id"), int) else None, competition=league.get("name") if isinstance(league.get("name"), str) else None, opponent_id=opp.get("id") if isinstance(opp.get("id"), int) else None, opponent=str(opp.get("name") or "Rival"), is_home=is_home, result=result, goals_for=own_goals if isinstance(own_goals, int) else None, goals_against=opp_goals if isinstance(opp_goals, int) else None)
+
+    @staticmethod
+    def _form_window(size: int, matches: list[FormMatch]) -> FormWindow:
+        wins = sum(item.result == "W" for item in matches); draws = sum(item.result == "D" for item in matches); losses = sum(item.result == "L" for item in matches)
+        gf = sum(item.goals_for or 0 for item in matches); ga = sum(item.goals_against or 0 for item in matches); sample = len(matches); points = wins * 3 + draws
+        return FormWindow(window=size, sample_size=sample, wins=wins, draws=draws, losses=losses, goals_for=gf, goals_against=ga, average_goals_for=round(gf / sample, 3) if sample else 0, average_goals_against=round(ga / sample, 3) if sample else 0, points=points, possible_points=sample * 3, points_percentage=round(points / (sample * 3), 4) if sample else 0, matches=matches)
 
     @staticmethod
     def _today_in_timezone(timezone: str) -> str:

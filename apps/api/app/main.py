@@ -14,5 +14,6 @@ app.add_middleware(
 )
 app.include_router(health.router)
 app.include_router(matches.router, prefix="/api/v1")
+app.include_router(matches.teams_router, prefix="/api/v1")
 app.include_router(catalog.router, prefix="/api/v1")
 app.include_router(parlay.router, prefix="/api/v1")

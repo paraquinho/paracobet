@@ -71,7 +71,10 @@ class ApiFootballProvider(SportsDataProvider):
         if not isinstance(response, dict):
             raise ApiFootballError("Invalid team statistics response")
         team = response.get("team") if isinstance(response.get("team"), dict) else {}
-        stats = TeamStatistics(team_id=team_id, team_name=str(team.get("name") or "Equipo"), logo=team.get("logo") if isinstance(team.get("logo"), str) else None, country=team.get("country") if isinstance(team.get("country"), str) else None, competition_id=competition_id, season=season, general=self._performance(response), home=self._performance(response, "home"), away=self._performance(response, "away"))
+        team_name = team.get("name") if isinstance(team.get("name"), str) and team.get("name") else None
+        if not team_name:
+            raise ApiFootballError("Team name unavailable")
+        stats = TeamStatistics(team_id=team_id, team_name=team_name, logo=team.get("logo") if isinstance(team.get("logo"), str) else None, country=team.get("country") if isinstance(team.get("country"), str) else None, competition_id=competition_id, season=season, general=self._performance(response), home=self._performance(response, "home"), away=self._performance(response, "away"))
         self._store_team(key, stats)
         return stats
 
@@ -84,10 +87,14 @@ class ApiFootballProvider(SportsDataProvider):
         response = payload.get("response")
         if not isinstance(response, list):
             raise ApiFootballError("Invalid team form response")
-        matches = [self._normalize_form(item, team_id) for item in response if isinstance(item, dict)]
+        normalized = [self._normalize_form(item, team_id, competition_id, season) for item in response if isinstance(item, dict)]
+        matches = [item for item in normalized if item is not None]
         matches.sort(key=lambda item: item.date, reverse=True)
         windows = {f"L{size}": self._form_window(size, matches[:size]) for size in (5, 10, 15, 20)}
-        form = TeamForm(team_id=team_id, team_name="Equipo", competition_id=competition_id, season=season, windows=windows)
+        team_name = next((name for item in response if isinstance(item, dict) for name in self._team_name_candidates(item, team_id)), None)
+        if not team_name:
+            raise ApiFootballError("Team name unavailable in form response")
+        form = TeamForm(team_id=team_id, team_name=team_name, competition_id=competition_id, season=season, windows=windows)
         self._store_team(key, form)
         return form
 
@@ -144,7 +151,7 @@ class ApiFootballProvider(SportsDataProvider):
         return TeamPerformanceStats(played=played, wins=value(fixtures, "wins"), draws=value(fixtures, "draws"), losses=value(fixtures, "loses") or value(fixtures, "losses"), goals_for=value(for_goals, "total"), goals_against=value(against_goals, "total"), goals_for_avg=average(for_goals), goals_against_avg=average(against_goals), clean_sheets=value(data.get("clean_sheet"), "total"), failed_to_score=value(data.get("failed_to_score"), "total"), metrics={})
 
     @staticmethod
-    def _normalize_form(item: dict[str, object], team_id: int) -> FormMatch:
+    def _normalize_form(item: dict[str, object], team_id: int, competition_id: int, season: int) -> FormMatch | None:
         fixture = item.get("fixture") if isinstance(item.get("fixture"), dict) else {}
         teams = item.get("teams") if isinstance(item.get("teams"), dict) else {}
         home = teams.get("home") if isinstance(teams.get("home"), dict) else {}
@@ -155,7 +162,25 @@ class ApiFootballProvider(SportsDataProvider):
         own_goals, opp_goals = goals.get("home" if is_home else "away"), goals.get("away" if is_home else "home")
         result = "W" if isinstance(own_goals, int) and isinstance(opp_goals, int) and own_goals > opp_goals else "L" if isinstance(own_goals, int) and isinstance(opp_goals, int) and own_goals < opp_goals else "D"
         league = item.get("league") if isinstance(item.get("league"), dict) else {}
-        return FormMatch(fixture_id=int(fixture.get("id") or 0), date=datetime.fromisoformat(str(fixture.get("date")).replace("Z", "+00:00")), competition_id=league.get("id") if isinstance(league.get("id"), int) else None, competition=league.get("name") if isinstance(league.get("name"), str) else None, opponent_id=opp.get("id") if isinstance(opp.get("id"), int) else None, opponent=str(opp.get("name") or "Rival"), is_home=is_home, result=result, goals_for=own_goals if isinstance(own_goals, int) else None, goals_against=opp_goals if isinstance(opp_goals, int) else None)
+        fixture_id = fixture.get("id")
+        league_id = league.get("id")
+        league_season = league.get("season")
+        if not isinstance(fixture_id, int) or fixture_id <= 0 or (isinstance(league_id, int) and league_id != competition_id) or (isinstance(league_season, int) and league_season != season):
+            return None
+        starts_at = fixture.get("date")
+        if not isinstance(starts_at, str) or not isinstance(home.get("id"), int) or not isinstance(away.get("id"), int) or team_id not in {home["id"], away["id"]}:
+            return None
+        return FormMatch(fixture_id=fixture_id, date=datetime.fromisoformat(starts_at.replace("Z", "+00:00")), competition_id=league_id if isinstance(league_id, int) else None, competition=league.get("name") if isinstance(league.get("name"), str) else None, opponent_id=opp.get("id") if isinstance(opp.get("id"), int) else None, opponent=str(opp.get("name") or "Rival"), is_home=is_home, result=result, goals_for=own_goals if isinstance(own_goals, int) else None, goals_against=opp_goals if isinstance(opp_goals, int) else None)
+
+    @staticmethod
+    def _team_name_candidates(item: dict[str, object], team_id: int) -> list[str]:
+        teams = item.get("teams") if isinstance(item.get("teams"), dict) else {}
+        names: list[str] = []
+        for side in ("home", "away"):
+            team = teams.get(side) if isinstance(teams.get(side), dict) else {}
+            if team.get("id") == team_id and isinstance(team.get("name"), str) and team["name"]:
+                names.append(team["name"])
+        return names
 
     @staticmethod
     def _form_window(size: int, matches: list[FormMatch]) -> FormWindow:
